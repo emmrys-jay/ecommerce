@@ -84,27 +84,27 @@ func main() {
 	// Dependency injection
 	// Ping
 	pingRepo := repository.NewPingRepository(db)
-	pingService := service.NewPingService(pingRepo, cache, l)
-	pingHandler := httpLib.NewPingHandler(pingService, validator.New(), l)
+	pingService := service.NewPingService(pingRepo, cache)
+	pingHandler := httpLib.NewPingHandler(pingService, validator.New())
 
 	// User
 	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo, cache, l)
-	userHandler := httpLib.NewUserHandler(userService, validator.New(), l)
+	userService := service.NewUserService(userRepo, cache)
+	userHandler := httpLib.NewUserHandler(userService, validator.New())
 
 	// Auth
-	authService := service.NewAuthService(userRepo, tokenService, cache, l)
-	authHandler := httpLib.NewAuthHandler(authService, validator.New(), l)
+	authService := service.NewAuthService(userRepo, tokenService, cache)
+	authHandler := httpLib.NewAuthHandler(authService, validator.New())
 
 	// Product
 	productRepo := repository.NewProductRepository(db)
-	productService := service.NewProductService(productRepo, cache, l)
-	productHandler := httpLib.NewProductHandler(productService, validator.New(), l)
+	productService := service.NewProductService(productRepo, cache)
+	productHandler := httpLib.NewProductHandler(productService, validator.New())
 
 	// Order
 	orderRepo := repository.NewOrderRepository(db)
-	orderService := service.NewOrderService(orderRepo, userRepo, productRepo, cache, l)
-	orderHandler := httpLib.NewOrderHandler(orderService, validator.New(), l)
+	orderService := service.NewOrderService(orderRepo, userRepo, productRepo, cache)
+	orderHandler := httpLib.NewOrderHandler(orderService, validator.New())
 
 	// Init router
 	router, err := httpLib.NewRouter(

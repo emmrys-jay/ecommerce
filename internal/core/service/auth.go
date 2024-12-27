@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/emmrys-jay/ecommerce/internal/core/util"
@@ -18,16 +19,14 @@ type AuthService struct {
 	repo  port.UserRepository
 	ts    port.TokenService
 	cache port.CacheRepository
-	l     *zap.Logger
 }
 
 // NewAuthService creates a new auth service instance
-func NewAuthService(repo port.UserRepository, ts port.TokenService, cache port.CacheRepository, log *zap.Logger) *AuthService {
+func NewAuthService(repo port.UserRepository, ts port.TokenService, cache port.CacheRepository) *AuthService {
 	return &AuthService{
 		repo,
 		ts,
 		cache,
-		log,
 	}
 }
 
@@ -39,7 +38,7 @@ func (as *AuthService) Login(ctx context.Context, req *domain.LoginRequest) (*do
 			return nil, domain.ErrInvalidCredentials
 		}
 
-		util.Error(as.l, ctx, "Error fetching user by email", cerr)
+		logger.FromCtx(ctx).Error("Error fetching user by email", zap.Error(cerr))
 		return nil, domain.ErrInternal
 	}
 
@@ -51,10 +50,13 @@ func (as *AuthService) Login(ctx context.Context, req *domain.LoginRequest) (*do
 	accessToken, err := as.ts.CreateToken(user.ID.String(), req.Email, user.Role.String())
 	if err != nil {
 
-		util.Error(as.l, ctx, "Error creating token", cerr)
+		logger.FromCtx(ctx).Error("Error creating token", zap.Error(cerr))
 		return nil, domain.ErrTokenCreation
 	}
-	util.Info(as.l, ctx, "created token for user using", "email/role", req.Email+"/"+user.Role.String())
+
+	logger.FromCtx(ctx).Info("created token for user using",
+		zap.String("email", req.Email),
+		zap.String("role", user.Role.String()))
 
 	return &domain.LoginResponse{
 		Token: accessToken,

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
-	"github.com/emmrys-jay/ecommerce/internal/core/util"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -19,7 +19,6 @@ type OrderService struct {
 	userRepo    port.UserRepository
 	productRepo port.ProductRepository
 	cache       port.CacheRepository
-	l           *zap.Logger
 }
 
 // NewOrderService creates a new order service instance
@@ -28,14 +27,12 @@ func NewOrderService(
 	userRepo port.UserRepository,
 	productRepo port.ProductRepository,
 	cache port.CacheRepository,
-	log *zap.Logger,
 ) *OrderService {
 	return &OrderService{
 		repo,
 		userRepo,
 		productRepo,
 		cache,
-		log,
 	}
 }
 
@@ -46,7 +43,7 @@ func (os *OrderService) PlaceOrder(ctx context.Context, userId uuid.UUID, req *d
 			return nil, domain.NewCError(cerr.Code(), "error fetching user: "+cerr.Error())
 		}
 
-		util.Error(os.l, ctx, "error fetching user to place order", cerr)
+		logger.FromCtx(ctx).Error("error fetching user to place order", zap.Error(cerr))
 		return nil, domain.ErrInternal
 	}
 
@@ -63,7 +60,7 @@ func (os *OrderService) PlaceOrder(ctx context.Context, userId uuid.UUID, req *d
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(os.l, ctx, "Error fetching products", cerr)
+			logger.FromCtx(ctx).Error("Error fetching products", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -105,12 +102,10 @@ func (os *OrderService) PlaceOrder(ctx context.Context, userId uuid.UUID, req *d
 		Status:      domain.OrderStatusPending,
 	}
 
-	os.l.Info(order.UserID.String())
-
 	retOrder, cerr := os.repo.CreateOrder(ctx, &order)
 	if cerr != nil {
 		if cerr.Code() == 500 {
-			util.Error(os.l, ctx, "Error placing orders", cerr)
+			logger.FromCtx(ctx).Error("Error placing orders", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -123,7 +118,7 @@ func (os *OrderService) GetOrder(ctx context.Context, id uuid.UUID) (*domain.Ord
 	order, cerr := os.repo.GetOrder(ctx, id)
 	if cerr != nil {
 		if cerr.Code() == 500 {
-			util.Error(os.l, ctx, "Error getting single order", cerr)
+			logger.FromCtx(ctx).Error("Error getting single order", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -137,7 +132,7 @@ func (os *OrderService) ListUserOrders(ctx context.Context, userId uuid.UUID) ([
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(os.l, ctx, "Error fetching user orders", cerr)
+			logger.FromCtx(ctx).Error("Error fetching user orders", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -165,7 +160,7 @@ func (os *OrderService) UpdateOrderStatus(ctx context.Context, orderId uuid.UUID
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(os.l, ctx, "Error updating order", cerr)
+			logger.FromCtx(ctx).Error("Error updating order", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -194,7 +189,7 @@ func (os *OrderService) CancelOrder(ctx context.Context, id uuid.UUID) (*domain.
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(os.l, ctx, "Error canceling order", cerr)
+			logger.FromCtx(ctx).Error("Error canceling order", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr

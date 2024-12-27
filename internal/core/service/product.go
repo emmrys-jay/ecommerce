@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
-	"github.com/emmrys-jay/ecommerce/internal/core/util"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -17,15 +17,13 @@ import (
 type ProductService struct {
 	repo  port.ProductRepository
 	cache port.CacheRepository
-	l     *zap.Logger
 }
 
 // NewProductService creates a new product service instance
-func NewProductService(repo port.ProductRepository, cache port.CacheRepository, log *zap.Logger) *ProductService {
+func NewProductService(repo port.ProductRepository, cache port.CacheRepository) *ProductService {
 	return &ProductService{
 		repo,
 		cache,
-		log,
 	}
 }
 
@@ -42,7 +40,7 @@ func (ps *ProductService) CreateProduct(ctx context.Context, prod *domain.Create
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(ps.l, ctx, "Error creating product", cerr)
+			logger.FromCtx(ctx).Error("Error creating product", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -56,7 +54,7 @@ func (ps *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (*domain
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(ps.l, ctx, "Error getting product", cerr)
+			logger.FromCtx(ctx).Error("Error getting product", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -69,7 +67,7 @@ func (ps *ProductService) ListProducts(ctx context.Context) ([]domain.Product, d
 	users, cerr := ps.repo.ListProducts(ctx)
 	if cerr != nil {
 
-		util.Error(ps.l, ctx, "Error listing products", cerr)
+		logger.FromCtx(ctx).Error("Error listing products", zap.Error(cerr))
 		return nil, domain.ErrInternal
 	}
 
@@ -100,7 +98,7 @@ func (ps *ProductService) UpdateProduct(ctx context.Context, id uuid.UUID, req *
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(ps.l, ctx, "Error updating product", cerr)
+			logger.FromCtx(ctx).Error("Error updating product", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -114,7 +112,7 @@ func (ps *ProductService) DeleteProduct(ctx context.Context, id uuid.UUID) domai
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(ps.l, ctx, "Error deleting product", cerr)
+			logger.FromCtx(ctx).Error("Error deleting product", zap.Error(cerr))
 			return domain.ErrInternal
 		}
 		return cerr

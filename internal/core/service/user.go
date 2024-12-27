@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/emmrys-jay/ecommerce/internal/core/util"
@@ -17,15 +18,13 @@ import (
 type UserService struct {
 	repo  port.UserRepository
 	cache port.CacheRepository
-	l     *zap.Logger
 }
 
 // NewUserService creates a new auth service instance
-func NewUserService(repo port.UserRepository, cache port.CacheRepository, log *zap.Logger) *UserService {
+func NewUserService(repo port.UserRepository, cache port.CacheRepository) *UserService {
 	return &UserService{
 		repo,
 		cache,
-		log,
 	}
 }
 
@@ -33,7 +32,7 @@ func (us *UserService) RegisterUser(ctx context.Context, user *domain.CreateUser
 	hashedPassword, err := util.HashPassword(user.Password)
 	if err != nil {
 
-		util.Error(us.l, ctx, "Error hashing user password", err)
+		logger.FromCtx(ctx).Error("Error hashing user password", zap.Error(err))
 		return nil, domain.ErrInternal
 	}
 
@@ -56,7 +55,7 @@ func (us *UserService) RegisterUser(ctx context.Context, user *domain.CreateUser
 			return nil, domain.NewCError(cerr.Code(), "email already exists")
 		}
 
-		util.Error(us.l, ctx, "Error creating user", cerr)
+		logger.FromCtx(ctx).Error("Error creating user", zap.Error(cerr))
 		return nil, domain.ErrInternal
 	}
 	userResponse.Password = ""
@@ -69,7 +68,7 @@ func (us *UserService) GetUser(ctx context.Context, id uuid.UUID) (*domain.User,
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(us.l, ctx, "Error getting user", cerr)
+			logger.FromCtx(ctx).Error("Error getting user", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -83,7 +82,7 @@ func (us *UserService) ListUsers(ctx context.Context) ([]domain.User, domain.CEr
 	users, cerr := us.repo.ListUsers(ctx)
 	if cerr != nil {
 
-		util.Error(us.l, ctx, "Error listing user", cerr)
+		logger.FromCtx(ctx).Error("Error listing user", zap.Error(cerr))
 		return nil, domain.ErrInternal
 	}
 
@@ -115,7 +114,7 @@ func (us *UserService) UpdateUser(ctx context.Context, id uuid.UUID, req *domain
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(us.l, ctx, "Error updating user", cerr)
+			logger.FromCtx(ctx).Error("Error updating user", zap.Error(cerr))
 			return nil, domain.ErrInternal
 		}
 		return nil, cerr
@@ -130,7 +129,7 @@ func (us *UserService) DeleteUser(ctx context.Context, id uuid.UUID) domain.CErr
 	if cerr != nil {
 		if cerr.Code() == 500 {
 
-			util.Error(us.l, ctx, "Error deleting user", cerr)
+			logger.FromCtx(ctx).Error("Error deleting user", zap.Error(cerr))
 			return domain.ErrInternal
 		}
 		return cerr

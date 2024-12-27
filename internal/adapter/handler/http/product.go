@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/go-chi/chi/v5"
@@ -16,15 +17,13 @@ import (
 type ProductHandler struct {
 	svc      port.ProductService
 	validate *validator.Validate
-	l        *zap.Logger
 }
 
 // NewProductHandler creates a new ProductHandler instance
-func NewProductHandler(svc port.ProductService, vld *validator.Validate, log *zap.Logger) *ProductHandler {
+func NewProductHandler(svc port.ProductService, vld *validator.Validate) *ProductHandler {
 	return &ProductHandler{
 		svc,
 		vld,
-		log,
 	}
 }
 
@@ -44,7 +43,7 @@ func NewProductHandler(svc port.ProductService, vld *validator.Validate, log *za
 func (ch *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req domain.CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -80,7 +79,7 @@ func (ch *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url product id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url product id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid product id"))
 		return
 	}
@@ -133,14 +132,14 @@ func (ch *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url product id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url product id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid product id"))
 		return
 	}
 
 	var req domain.UpdateProductRequest
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -177,7 +176,7 @@ func (ch *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) 
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url product id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url product id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid product id"))
 		return
 	}

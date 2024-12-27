@@ -87,8 +87,7 @@ func requestLogger(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		l = l.With(zap.String(string(correlationIDCtxKey), correlationID))
-
-		// w.Header().Add("X-Correlation-ID", correlationID)
+		w.Header().Add("X-Correlation-ID", correlationID)
 
 		lrw := newLoggingResponseWriter(w)
 

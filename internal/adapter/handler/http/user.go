@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/go-chi/chi/v5"
@@ -16,15 +17,13 @@ import (
 type UserHandler struct {
 	svc      port.UserService
 	validate *validator.Validate
-	l        *zap.Logger
 }
 
 // NewUserHandler creates a new UserHandler instance
-func NewUserHandler(svc port.UserService, vld *validator.Validate, log *zap.Logger) *UserHandler {
+func NewUserHandler(svc port.UserService, vld *validator.Validate) *UserHandler {
 	return &UserHandler{
 		svc,
 		vld,
-		log,
 	}
 }
 
@@ -44,7 +43,7 @@ func NewUserHandler(svc port.UserService, vld *validator.Validate, log *zap.Logg
 func (ch *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var req domain.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -80,7 +79,7 @@ func (ch *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url uid", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url uid", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid user id"))
 		return
 	}
@@ -134,14 +133,14 @@ func (ch *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url uid", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url uid", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid user id"))
 		return
 	}
 
 	var req domain.UpdateUserRequest
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -178,7 +177,7 @@ func (ch *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url uid", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url uid", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid user id"))
 		return
 	}

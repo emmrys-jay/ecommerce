@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/go-chi/chi/v5"
@@ -17,15 +18,13 @@ import (
 type OrderHandler struct {
 	svc      port.OrderService
 	validate *validator.Validate
-	l        *zap.Logger
 }
 
 // NewOrderHandler creates a new OrderHandler instance
-func NewOrderHandler(svc port.OrderService, vld *validator.Validate, log *zap.Logger) *OrderHandler {
+func NewOrderHandler(svc port.OrderService, vld *validator.Validate) *OrderHandler {
 	return &OrderHandler{
 		svc,
 		vld,
-		log,
 	}
 }
 
@@ -45,7 +44,7 @@ func NewOrderHandler(svc port.OrderService, vld *validator.Validate, log *zap.Lo
 func (ch *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	var req domain.CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -88,7 +87,7 @@ func (ch *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url order id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url order id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid order id"))
 		return
 	}
@@ -118,7 +117,7 @@ func (ch *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "user_id")
 	userId, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url user id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url user id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid user id in url path"))
 		return
 	}
@@ -150,14 +149,14 @@ func (ch *OrderHandler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url order id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url order id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid order id"))
 		return
 	}
 
 	var req domain.UpdateOrderRequest
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ch.l.Error("Error decoding json body", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		handleError(w, domain.ErrInternal)
 		return
 	}
@@ -193,7 +192,7 @@ func (ch *OrderHandler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		ch.l.Error("Error parsing url order id", zap.Error(err))
+		logger.FromCtx(r.Context()).Error("Error parsing url order id", zap.Error(err))
 		handleError(w, domain.NewBadRequestCError("Invalid order id"))
 		return
 	}

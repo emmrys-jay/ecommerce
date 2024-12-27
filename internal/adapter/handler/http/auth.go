@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
 	"github.com/go-playground/validator/v10"
@@ -14,15 +15,13 @@ import (
 type AuthHandler struct {
 	svc      port.AuthService
 	validate *validator.Validate
-	l        *zap.Logger
 }
 
 // NewAuthHandler creates a new AuthHandler instance
-func NewAuthHandler(svc port.AuthService, validate *validator.Validate, l *zap.Logger) *AuthHandler {
+func NewAuthHandler(svc port.AuthService, validate *validator.Validate) *AuthHandler {
 	return &AuthHandler{
 		svc,
 		validate,
-		l,
 	}
 }
 
@@ -42,6 +41,7 @@ func NewAuthHandler(svc port.AuthService, validate *validator.Validate, l *zap.L
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req domain.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.FromCtx(r.Context()).Error("Error decoding json body", zap.Error(err))
 		validationError(w, err)
 		return
 	}

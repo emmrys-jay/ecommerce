@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -44,7 +43,6 @@ func (or *OrderRepository) CreateOrder(ctx context.Context, order *domain.Order)
 	if err != nil {
 		return nil, domain.NewInternalCError("error building query for orders: " + err.Error())
 	}
-	log.Println(sql)
 
 	err = tx.QueryRow(ctx, sql, args...).Scan(
 		&order.ID,

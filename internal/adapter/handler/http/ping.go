@@ -3,9 +3,9 @@ package http
 import (
 	"net/http"
 
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 	"github.com/emmrys-jay/ecommerce/internal/core/port"
-	"go.uber.org/zap"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -14,15 +14,13 @@ import (
 type PingHandler struct {
 	svc      port.PingService
 	validate *validator.Validate
-	l        *zap.Logger
 }
 
 // NewCategoryHandler creates a new CategoryHandler instance
-func NewPingHandler(svc port.PingService, vld *validator.Validate, log *zap.Logger) *PingHandler {
+func NewPingHandler(svc port.PingService, vld *validator.Validate) *PingHandler {
 	return &PingHandler{
 		svc,
 		vld,
-		log,
 	}
 }
 
@@ -65,6 +63,6 @@ func (ch *PingHandler) PingPost(w http.ResponseWriter, r *http.Request) {
 //	@Success		200	{object}	response	"Ping created"
 //	@Router			/health [get]
 func (ch *PingHandler) PingGet(w http.ResponseWriter, r *http.Request) {
-	ch.l.Info("Alive!")
+	logger.FromCtx(r.Context()).Info("Alive!")
 	handleSuccessWithMessage(w, 200, nil, "Server OK")
 }
