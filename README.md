@@ -39,11 +39,11 @@ You can use Docker Compose to start a Postgres database container. To do this:
 
 1. Install Docker and Docker Compose on your machine.
 2. Run the following command to start the database container:
-```
-make service-up
-```
+    ```
+    make service-up
+    ```
 You can use `make service-down` to stop the postgres container.
-3. The database will be available at `localhost:5433`. // 5433 was used not to conflict with any locally installed container, but you can modify it in your `config.yml` file
+3. The database will be available at `localhost:5433`. The port `5433` was used to avoid conflict with any locally installed postgres instance, but you can modify it in your `config.yml` file.
 
 *Option 2: Using a Local Postgres Database*
 
@@ -63,9 +63,9 @@ If you already have a Postgres database installed locally, you can use it instea
 1. Run database migrations using:
 
     ```bash
-    make migration-up
+    make migrate-up
     ```
-    You can drop all table in the database using `make migration-down`.
+    You can drop all tables in the database using `make migrate-down`.
 
 2. Install all dependencies necessary for running the commands to start up the application on main:
 
@@ -73,7 +73,7 @@ If you already have a Postgres database installed locally, you can use it instea
     make install
     ```
 
-    The commands are written for MacOS ARM 64 architecture. Update them accordingly for any other operating system.
+    Some of the commands are written for MacOS ARM 64 architecture. Update them accordingly for any other operating system.
 
 3. Run the project in development mode using:
 
@@ -87,7 +87,7 @@ If you already have a Postgres database installed locally, you can use it instea
 
 ## Documentation
 
-API documentation can be found in `docs/` directory. To view the documentation, open the browser and go to `http://localhost:8080/docs/index.html`. The documentation is generated using [swaggo](https://github.com/swaggo/swag/) with [gin-swagger](https://github.com/swaggo/gin-swagger/) middleware.
+API documentation can be found in `docs/` directory. To view the documentation, open the browser and go to `http://127.0.0.1:8080/swagger/index.html`. The documentation is generated using [swaggo](https://github.com/swaggo/swag/) with [http-swagger](https://github.com/swaggo/http-swagger/) middleware.
 
 Also, you can view the [Postman](https://www.postman.com/) documentation [here](https://documenter.getpostman.com/view/27735481/2sAYJ6CKfj)
 
