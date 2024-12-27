@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"savely/internal/adapter/config"
-	"savely/internal/core/port"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/config"
+	"github.com/emmrys-jay/ecommerce/internal/core/port"
 
 	"github.com/redis/go-redis/v9"
 )

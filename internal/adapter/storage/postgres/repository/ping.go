@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"savely/internal/adapter/storage/postgres"
-	"savely/internal/core/domain"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/postgres"
+	"github.com/emmrys-jay/ecommerce/internal/core/domain"
 )
 
 /**

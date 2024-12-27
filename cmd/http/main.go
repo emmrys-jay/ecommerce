@@ -6,30 +6,30 @@ import (
 	"net/http"
 	"os"
 
-	_ "savely/docs"
-	"savely/internal/adapter/auth/jwt"
-	"savely/internal/adapter/config"
-	httpLib "savely/internal/adapter/handler/http"
-	"savely/internal/adapter/logger"
-	"savely/internal/adapter/storage/postgres"
-	"savely/internal/adapter/storage/postgres/repository"
-	"savely/internal/adapter/storage/redis"
-	"savely/internal/core/service"
+	_ "github.com/emmrys-jay/ecommerce/docs"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/auth/jwt"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/config"
+	httpLib "github.com/emmrys-jay/ecommerce/internal/adapter/handler/http"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/postgres"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/postgres/repository"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/redis"
+	"github.com/emmrys-jay/ecommerce/internal/core/service"
 
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
-// @title						Savely (Smart Personal Finance Manager) API
+// @title						Ecommerce API
 // @version					1.0
-// @description				This is a RESTful personal finance API written in Go using go-chi, PostgreSQL database, and Redis cache.
+// @description				This is a RESTFUL Ecommerce API in Go using go-chi, PostgreSQL database, and Redis cache.
 //
 // @contact.name				Emmanuel Jonathan
-// @contact.url				https://github.com/emmrys-jay/savely
+// @contact.url				https://github.com/emmrys-jay
 // @contact.email				jonathanemma121@gmail.com
 //
-// @host						http://localhost:8080
-// @BasePath					/v1
+// @host						localhost:8080
+// @BasePath					/api/v1
 // @schemes					http https
 //
 // @securityDefinitions.apikey	BearerAuth
@@ -47,6 +47,15 @@ func main() {
 		zap.String("app", config.App.Name),
 		zap.String("env", config.App.Env))
 
+	// // Migrate postgres database
+	// err := postgres.Migrate()
+	// if err != nil {
+	// 	l.Error("Error migrating database", zap.Error(err))
+	// 	os.Exit(1)
+	// }
+
+	// l.Info("Successfully migrated the database")
+
 	// Init database
 	ctx := context.Background()
 	db, err := postgres.New(ctx, &config.Database)
@@ -58,15 +67,6 @@ func main() {
 
 	l.Info("Successfully connected to the database",
 		zap.String("db", config.Database.Protocol))
-
-	// Migrate database
-	// err = db.Migrate()
-	// if err != nil {
-	// 	l.Error("Error migrating database", zap.Error(err))
-	// 	os.Exit(1)
-	// }
-
-	// l.Info("Successfully migrated the database")
 
 	// Init cache service
 	cache, err := redis.New(ctx, &config.Redis)
@@ -84,18 +84,54 @@ func main() {
 	// Dependency injection
 	// Ping
 	pingRepo := repository.NewPingRepository(db)
-	pingService := service.NewPingService(pingRepo, cache)
-	pingHandler := httpLib.NewPingHandler(pingService, validator.New())
+	pingService := service.NewPingService(pingRepo, cache, l)
+	pingHandler := httpLib.NewPingHandler(pingService, validator.New(), l)
+
+	// User
+	userRepo := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepo, cache, l)
+	userHandler := httpLib.NewUserHandler(userService, validator.New(), l)
+
+	// Auth
+	authService := service.NewAuthService(userRepo, tokenService, cache, l)
+	authHandler := httpLib.NewAuthHandler(authService, validator.New(), l)
+
+	// Product
+	productRepo := repository.NewProductRepository(db)
+	productService := service.NewProductService(productRepo, cache, l)
+	productHandler := httpLib.NewProductHandler(productService, validator.New(), l)
+
+	// Order
+	orderRepo := repository.NewOrderRepository(db)
+	orderService := service.NewOrderService(orderRepo, userRepo, productRepo, cache, l)
+	orderHandler := httpLib.NewOrderHandler(orderService, validator.New(), l)
 
 	// Init router
 	router, err := httpLib.NewRouter(
 		&config.Server,
 		tokenService,
+		l,
 		*pingHandler,
+		*userHandler,
+		*authHandler,
+		*productHandler,
+		*orderHandler,
 	)
 	if err != nil {
 		l.Error("Error initializing router ", zap.Error(err))
 		os.Exit(1)
+	}
+
+	// Create Admin User
+	if err := userService.CreateAdminUser(context.Background(), config.Admin.Email, config.Admin.Password); err != nil {
+		if err.Code() != 500 {
+			l.Info("Admin user already exists", zap.String("info", err.Error()))
+		} else {
+			l.Error("Could not create admin user, exiting...", zap.Error(err))
+			os.Exit(1)
+		}
+	} else {
+		l.Info("Successfully created admin user with email: ", zap.String("email", config.Admin.Email))
 	}
 
 	// Start server

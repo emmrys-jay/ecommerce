@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 
-	"savely/internal/core/domain"
-	"savely/internal/core/port"
+	"github.com/emmrys-jay/ecommerce/internal/core/domain"
+	"github.com/emmrys-jay/ecommerce/internal/core/port"
+	"go.uber.org/zap"
 )
 
 /**
@@ -13,13 +14,15 @@ import (
 type PingService struct {
 	repo  port.PingRepository
 	cache port.CacheRepository
+	l     *zap.Logger
 }
 
 // NewAuthService creates a new auth service instance
-func NewPingService(repo port.PingRepository, cache port.CacheRepository) *PingService {
+func NewPingService(repo port.PingRepository, cache port.CacheRepository, log *zap.Logger) *PingService {
 	return &PingService{
 		repo,
 		cache,
+		log,
 	}
 }
 

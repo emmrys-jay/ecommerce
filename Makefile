@@ -20,7 +20,7 @@ DSN := $(DB_PROTOCOL)://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAM
 ARG ?= 1
 
 .PHONY: default install service-up service-down db-docs db-create db-drop db-cli \
-        migrate-up migrate-down redis-cli dev lint build start swag test
+        migrate-up migrate-down redis-cli dev lint build start swag test sqlc-gen
 
 default: install ## Getting started
 
@@ -31,11 +31,17 @@ install: ## Install dependencies
 	go install github.com/swaggo/swag/cmd/swag@latest
 # go install go.uber.org/mock/mockgen@latest
 
-service-up: ## Start services
+service-build: ## Rebuild image and containers
+	DB_PASSWORD=$(DB_PASSWORD) DB_NAME=$(DB_NAME) DB_USER=$(DB_USER) docker-compose up --build -d
+
+service-up: ## Start docker services
 	DB_PASSWORD=$(DB_PASSWORD) DB_NAME=$(DB_NAME) DB_USER=$(DB_USER) docker-compose up -d
 
 service-down: ## Stop services
 	docker-compose down
+
+service-down-add: ## Stop services, volumes and networks
+	docker-compose down -v
 
 # db-docs: ## Generate database documentation from DBML file
 # 	dbdocs build $(DBML_FILE)
@@ -48,6 +54,9 @@ service-down: ## Stop services
 
 # db-cli: ## Connect to database using command line interface
 # 	docker exec -it savely_postgres sh -c "psql -U $(DB_USER) -d $(DB_NAME)"
+
+create-migration:
+	migrate create -ext sql -dir internal/adapter/storage/postgres/migrations -seq $(NAME)
 
 migrate-up: ## Run database migrations
 	migrate -path ./internal/adapter/storage/postgres/migrations -database $(DSN) -verbose up $(ARG)
@@ -80,3 +89,6 @@ swag: ## Generate swagger documentation
 test: ## Run tests
 	go test -v ./... -race -cover -timeout 30s -count 1 -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
+
+sqlc-gen:
+	sqlc generate -f ./internal/adapter/storage/postgres/repository/sqlc/sqlc.yaml

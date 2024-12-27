@@ -9,7 +9,7 @@ import (
 // Setup initialize configuration
 var (
 	// Params ParamsConfiguration
-	Config *Configuration
+	config *Configuration
 )
 
 // Params = getConfig.Params
@@ -30,13 +30,13 @@ func Setup() *Configuration {
 	}
 
 	// Params = configuration.Params
-	Config = configuration
+	config = configuration
 	log.Println("Configurations loading successfully")
 
-	return Config
+	return config
 }
 
 // GetConfig helps you to get configuration data
 func GetConfig() *Configuration {
-	return Config
+	return config
 }

@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"savely/internal/adapter/config"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

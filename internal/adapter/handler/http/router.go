@@ -1,10 +1,12 @@
 package http
 
 import (
+	"net/http"
 	"strings"
 
-	"savely/internal/adapter/config"
-	"savely/internal/core/port"
+	"github.com/emmrys-jay/ecommerce/internal/adapter/config"
+	"github.com/emmrys-jay/ecommerce/internal/core/port"
+	"go.uber.org/zap"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -21,13 +23,18 @@ type Router struct {
 func NewRouter(
 	config *config.ServerConfiguration,
 	token port.TokenService,
+	logger *zap.Logger,
 	pingHandler PingHandler,
+	userHandler UserHandler,
+	authHandler AuthHandler,
+	productHandler ProductHandler,
+	orderHandler OrderHandler,
 ) (*Router, error) {
 
 	// CORS
 	corsConfig := cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
@@ -49,11 +56,11 @@ func NewRouter(
 
 	// Swagger
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/docs/doc.json"), //The url pointing to API definition
+		httpSwagger.URL("0.0.0.0:"+config.HttpPort+"/swagger/doc.json"), //The url pointing to API definition
 	))
 
 	// v1
-	router.Route("/v1", func(r chi.Router) {
+	router.Route("/api/v1", func(r chi.Router) {
 
 		// Ping
 		r.Route("/health", func(r chi.Router) {
@@ -61,6 +68,35 @@ func NewRouter(
 			r.Post("/", pingHandler.PingPost)
 		})
 
+		// Auth
+		r.Post("/login", authHandler.Login)
+
+		// User
+		r.Route("/user", func(r chi.Router) {
+			r.Post("/", userHandler.RegisterUser)
+			r.Get("/{id}", adminMiddleware(http.HandlerFunc(userHandler.GetUser), token, logger))
+			r.Patch("/{id}", authMiddleware(http.HandlerFunc(userHandler.UpdateUser), token, logger))
+			r.Delete("/{id}", adminMiddleware(http.HandlerFunc(userHandler.DeleteUser), token, logger))
+		})
+		r.Get("/users", adminMiddleware(http.HandlerFunc(userHandler.ListUsers), token, logger))
+
+		// Product
+		r.Route("/product", func(r chi.Router) {
+			r.Post("/", adminMiddleware(http.HandlerFunc(productHandler.CreateProduct), token, logger))
+			r.Get("/{id}", adminMiddleware(http.HandlerFunc(productHandler.GetProduct), token, logger))
+			r.Patch("/{id}", adminMiddleware(http.HandlerFunc(productHandler.UpdateProduct), token, logger))
+			r.Delete("/{id}", adminMiddleware(http.HandlerFunc(productHandler.DeleteProduct), token, logger))
+		})
+		r.Get("/products", productHandler.ListProducts)
+
+		// Order
+		r.Route("/order", func(r chi.Router) {
+			r.Post("/", authMiddleware(http.HandlerFunc(orderHandler.PlaceOrder), token, logger))
+			r.Get("/{id}", authMiddleware(http.HandlerFunc(orderHandler.GetOrder), token, logger))
+			r.Patch("/{id}", adminMiddleware(http.HandlerFunc(orderHandler.UpdateOrderStatus), token, logger))
+			r.Patch("/{id}/cancel", authMiddleware(http.HandlerFunc(orderHandler.CancelOrder), token, logger))
+		})
+		r.Get("/user/{user_id}/orders", authMiddleware(http.HandlerFunc(orderHandler.ListOrders), token, logger))
 	})
 
 	return &Router{

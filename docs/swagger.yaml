@@ -1,19 +1,102 @@
-basePath: /v1
+basePath: /api/v1
 definitions:
+  domain.CreateOrderRequest:
+    properties:
+      products:
+        items:
+          $ref: '#/definitions/domain.ProductInfo'
+        type: array
+    type: object
+  domain.CreateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - description
+    - name
+    - price
+    - quantity
+    type: object
+  domain.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  domain.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
   domain.Ping:
     properties:
       name:
         type: string
     type: object
+  domain.ProductInfo:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  domain.UpdateOrderRequest:
+    properties:
+      status:
+        type: string
+    type: object
+  domain.UpdateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      status:
+        type: string
+    type: object
+  domain.UpdateUserRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+    required:
+    - first_name
+    - last_name
+    type: object
   http.errorResponse:
     properties:
       messages:
-        example:
-        - Error message 1
-        - ' Error message 2'
-        items:
-          type: string
-        type: array
+        example: Error message 1 - Error message 2
+        type: string
       success:
         example: false
         type: boolean
@@ -28,18 +111,18 @@ definitions:
         example: true
         type: boolean
     type: object
-host: http://localhost:8080
+host: localhost:8080
 info:
   contact:
     email: jonathanemma121@gmail.com
     name: Emmanuel Jonathan
-    url: https://github.com/emmrys-jay/savely
-  description: This is a RESTful personal finance API written in Go using go-chi,
-    PostgreSQL database, and Redis cache.
-  title: Savely (Smart Personal Finance Manager) API
+    url: https://github.com/emmrys-jay
+  description: This is a RESTFUL Ecommerce API in Go using go-chi, PostgreSQL database,
+    and Redis cache.
+  title: Ecommerce API
   version: "1.0"
 paths:
-  /:
+  /health:
     get:
       consumes:
       - application/json
@@ -61,15 +144,80 @@ paths:
       parameters:
       - description: Create ping request
         in: body
-        name: ping.PingPostDTO
+        name: domain.Ping
         required: true
         schema:
           $ref: '#/definitions/domain.Ping'
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: Ping created
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Create a new ping object
+      tags:
+      - Ping
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a registered user and returns an access token if the credentials
+        are valid.
+      parameters:
+      - description: Login request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Succesfully logged in
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Login and get an access token
+      tags:
+      - Auth
+  /order:
+    post:
+      consumes:
+      - application/json
+      description: create a new order with all required details
+      parameters:
+      - description: Order
+        in: body
+        name: domain.CreateOrderRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Order created successfully
           schema:
             $ref: '#/definitions/http.response'
         "400":
@@ -82,9 +230,448 @@ paths:
             $ref: '#/definitions/http.errorResponse'
       security:
       - BearerAuth: []
-      summary: Create a new ping object
+      summary: Create a new order
       tags:
-      - Ping
+      - Order
+  /order/{id}:
+    get:
+      consumes:
+      - application/json
+      description: fetch an order through id
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an order by id
+      tags:
+      - Order
+    patch:
+      consumes:
+      - application/json
+      description: update an order
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order Status
+        in: body
+        name: domain.UpdateOrderRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an order
+      tags:
+      - Order
+  /order/{id}/cancel:
+    patch:
+      consumes:
+      - application/json
+      description: cancel an order
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel an order
+      tags:
+      - Order
+  /product:
+    post:
+      consumes:
+      - application/json
+      description: create a new product with all required details
+      parameters:
+      - description: Product
+        in: body
+        name: domain.CreateProductRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - Product
+  /product/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a product through id
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "404":
+          description: Not found error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a product by id
+      tags:
+      - Product
+    get:
+      consumes:
+      - application/json
+      description: fetch a product through id
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a product by id
+      tags:
+      - Product
+    patch:
+      consumes:
+      - application/json
+      description: update a product
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product
+        in: body
+        name: domain.UpdateProductRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a product
+      tags:
+      - Product
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: list all active products
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all products
+      tags:
+      - Product
+  /user:
+    post:
+      consumes:
+      - application/json
+      description: register a new user with all required details
+      parameters:
+      - description: User
+        in: body
+        name: domain.CreateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "409":
+          description: Conflict error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Register a new user
+      tags:
+      - User
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a user through id
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "404":
+          description: Not found error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a user by id
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      description: fetch a user through id
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a user by id
+      tags:
+      - User
+    patch:
+      consumes:
+      - application/json
+      description: update a user
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User
+        in: body
+        name: domain.UpdateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a user
+      tags:
+      - User
+  /user/{user_id}/orders:
+    get:
+      consumes:
+      - application/json
+      description: list all orders by a user
+      parameters:
+      - description: User id
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all orders by a user
+      tags:
+      - Order
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: list all registered active users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/http.response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all users
+      tags:
+      - User
 schemes:
 - http
 - https
