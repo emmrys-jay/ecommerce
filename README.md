@@ -23,8 +23,8 @@ The development process relies heavily on Make. Make is used to manage dependenc
     ```bash
     cp config-sample.yml config.yml
     ```
-
     Update configuration values as needed.
+
 3. Update the `Makefile` variable `CONFIG_FILE` to point to your `config.yml` file.
 
 ## Database Setup
