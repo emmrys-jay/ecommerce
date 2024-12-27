@@ -43,6 +43,7 @@ You can use Docker Compose to start a Postgres database container. To do this:
     make service-up
     ```
 You can use `make service-down` to stop the postgres container.
+
 3. The database will be available at `localhost:5433`. The port `5433` was used to avoid conflict with any locally installed postgres instance, but you can modify it in your `config.yml` file.
 
 *Option 2: Using a Local Postgres Database*
