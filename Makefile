@@ -17,7 +17,7 @@ DB_PASSWORD := $(shell yq '.database.password' $(CONFIG_FILE))
 
 DSN := $(DB_PROTOCOL)://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
-ARG ?= 1
+ARG ?= 
 
 .PHONY: default install service-up service-down db-docs db-create db-drop db-cli \
         migrate-up migrate-down redis-cli dev lint build start swag test sqlc-gen
@@ -27,8 +27,9 @@ default: install ## Getting started
 install: ## Install dependencies
 	go mod download
 	go install github.com/air-verse/air@latest
+	brew install yq
 # go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	go install github.com/swaggo/swag/cmd/swag@latest
+# go install github.com/swaggo/swag/cmd/swag@latest
 # go install go.uber.org/mock/mockgen@latest
 
 service-build: ## Rebuild image and containers

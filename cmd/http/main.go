@@ -13,7 +13,6 @@ import (
 	"github.com/emmrys-jay/ecommerce/internal/adapter/logger"
 	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/postgres"
 	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/postgres/repository"
-	"github.com/emmrys-jay/ecommerce/internal/adapter/storage/redis"
 	"github.com/emmrys-jay/ecommerce/internal/core/service"
 
 	"github.com/go-playground/validator/v10"
@@ -68,13 +67,13 @@ func main() {
 	l.Info("Successfully connected to the database",
 		zap.String("db", config.Database.Protocol))
 
-	// Init cache service
-	cache, err := redis.New(ctx, &config.Redis)
-	if err != nil {
-		l.Error("Error initializing cache connection", zap.Error(err))
-		os.Exit(1)
-	}
-	defer cache.Close()
+	// // Init cache service
+	// cache, err := redis.New(ctx, &config.Redis)
+	// if err != nil {
+	// 	l.Error("Error initializing cache connection", zap.Error(err))
+	// 	os.Exit(1)
+	// }
+	// defer cache.Close()
 
 	l.Info("Successfully connected to the cache server")
 
