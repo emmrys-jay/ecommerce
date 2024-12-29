@@ -47,15 +47,6 @@ func main() {
 		zap.String("app", config.App.Name),
 		zap.String("env", config.App.Env))
 
-	// // Migrate postgres database
-	// err := postgres.Migrate()
-	// if err != nil {
-	// 	l.Error("Error migrating database", zap.Error(err))
-	// 	os.Exit(1)
-	// }
-
-	// l.Info("Successfully migrated the database")
-
 	// Init database
 	ctx := context.Background()
 	db, err := postgres.New(ctx, &config.Database)
@@ -67,6 +58,15 @@ func main() {
 
 	l.Info("Successfully connected to the database",
 		zap.String("db", config.Database.Protocol))
+
+	// Migrate postgres database
+	err = db.Migrate()
+	if err != nil {
+		l.Error("Error migrating database", zap.Error(err))
+		os.Exit(1)
+	}
+
+	l.Info("Successfully migrated the database")
 
 	// Init cache service
 	cache, err := redis.New(ctx, &config.Redis)

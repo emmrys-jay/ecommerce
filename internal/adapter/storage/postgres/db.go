@@ -14,7 +14,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
-	"github.com/jackc/pgx/v5"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -72,14 +72,14 @@ func New(ctx context.Context, config *config.DatabaseConfiguration) (*DB, error)
 }
 
 // Migrate runs the database migration
-func Migrate() error {
+func (db *DB) Migrate() error {
 	// Establish connection to PostgreSQL
-	url := dsn(&config.GetConfig().Database)
-	conn, err := pgx.Connect(context.Background(), url)
-	if err != nil {
-		return fmt.Errorf("Error connecting to db: %w", err)
-	}
-	defer conn.Close(context.Background())
+	// url := dsn(&config.GetConfig().Database)
+	// conn, err := pgx.Connect(context.Background(), url)
+	// if err != nil {
+	// 	return fmt.Errorf("Error connecting to db: %w", err)
+	// }
+	// defer conn.Close(context.Background())
 
 	driver, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
@@ -87,7 +87,7 @@ func Migrate() error {
 	}
 	defer driver.Close()
 
-	migrations, err := migrate.NewWithSourceInstance("iofs", driver, url)
+	migrations, err := migrate.NewWithSourceInstance("iofs", driver, db.url)
 	if err != nil {
 		return err
 	}
