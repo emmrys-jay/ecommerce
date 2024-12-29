@@ -73,14 +73,6 @@ func New(ctx context.Context, config *config.DatabaseConfiguration) (*DB, error)
 
 // Migrate runs the database migration
 func (db *DB) Migrate() error {
-	// Establish connection to PostgreSQL
-	// url := dsn(&config.GetConfig().Database)
-	// conn, err := pgx.Connect(context.Background(), url)
-	// if err != nil {
-	// 	return fmt.Errorf("Error connecting to db: %w", err)
-	// }
-	// defer conn.Close(context.Background())
-
 	driver, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
 		return fmt.Errorf("Error connecting to db: %w", err)
