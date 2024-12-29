@@ -61,12 +61,12 @@ If you already have a Postgres database installed locally, you can use it instea
 
 ## Starting the Application
 
-1. Run database migrations using:
+1. Run database migrations using (Optional: It also runs on application startup):
 
     ```bash
     make migrate-up
     ```
-    You can drop all tables in the database using `make migrate-down`.
+    You can drop all tables in the database using `make migrate-down`. You can ignore the migrate commands because the application automatically runs your database migrations on startup.
 
 2. Install all dependencies necessary for running the commands to start up the application on main:
 
